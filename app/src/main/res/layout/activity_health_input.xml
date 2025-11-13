@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/input"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFF9">
+
+    <!-- 상단 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:background="#545E55"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/pillImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/pill_image"
+            android:scaleType="fitXY" />
+    </LinearLayout>
+
+    <!-- 본문 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="89dp"
+            android:layout_marginBottom="16dp"
+            android:text="현재 건강 상태를 선택해주세요"
+            android:textColor="#545E55"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <CheckBox
+                android:id="@+id/cb_fatigue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="피로하다"
+                android:textColor="#667467" />
+
+            <CheckBox
+                android:id="@+id/cb_sleep"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="수면이 부족하다"
+                android:textColor="#667467" />
+
+            <CheckBox
+                android:id="@+id/cb_digestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="소화가 잘 되지 않는다"
+                android:textColor="#667467" />
+
+            <CheckBox
+                android:id="@+id/cb_immunity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="면역력이 부족하다"
+                android:textColor="#667467" />
+
+            <CheckBox
+                android:id="@+id/cb_focus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="집중을 잘 하지 못한다"
+                android:textColor="#667467" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_submit"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="#545E55"
+            android:text="영양제 추천받기"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:background="#545E55"
+        android:gravity="center">
+
+        <!-- 알람 설정 -->
+        <LinearLayout
+            android:id="@+id/btnAlarm"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/fi_sr_alarm_clock" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="알람 설정"
+                android:textColor="#C8C8C8"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 복용 안내 -->
+        <LinearLayout
+            android:id="@+id/btnGuide"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/group_24" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="복용 안내"
+                android:textColor="#C8C8C8"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 영양제 추천 -->
+        <LinearLayout
+            android:id="@+id/btnRecommend"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/format_stroke__weight_regular" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="영양제 추천"
+                android:textColor="#FFFFF9"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 약 봉투 촬영 -->
+        <LinearLayout
+            android:id="@+id/btnCamera"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/group_38" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="약 봉투 촬영"
+                android:textColor="#C8C8C8"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+</LinearLayout>

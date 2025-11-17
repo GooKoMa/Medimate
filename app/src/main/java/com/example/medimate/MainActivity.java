@@ -11,6 +11,8 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
+import android.widget.TextView;
+import androidx.lifecycle.ViewModelProvider;
 
 // ... (AndroidX import: AppCompatActivity, EdgeToEdge 등) ...
 import androidx.activity.EdgeToEdge;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     // 2. UI 요소
     private Button cameraButton;
     private Button galleryButton;
+    private Uri imageUri;
 
     // 3. Activity 런처 (카메라/갤러리/권한)
     private ActivityResultLauncher<Intent> cameraLauncher;
@@ -58,11 +61,11 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> requestPermissionLauncher;
 
     // 4. 데이터 (이미지 Uri)
-    private Uri imageUri;
 
     // (전문가 변수 및 API 키가 모두 제거됨)
 
     // --- 생명 주기 메소드 ---
+    private TextView resultTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
 
         galleryButton = findViewById(R.id.gallery_button);
         galleryButton.setOnClickListener(v -> launchGallery());
+        resultTextView = findViewById(R.id.result_text_view);
+
+        // (이 코드가 ViewModel과 MainActivity를 연결하는 핵심입니다)
+        viewModel.getProcessingResultLiveData().observe(this, text -> {
+            // '게시판'의 텍스트(text)가 바뀔 때마다 이 중괄호 안이 실행됨
+            resultTextView.setText(text);
+        });
     }
 
     @Override
@@ -116,7 +126,14 @@ public class MainActivity extends AppCompatActivity {
      * Uri -> Bitmap 변환 후, '작업 반장'에게 작업 지시
      */
     private void processImageUri(Uri uri) {
-        if (uri == null) { /* ... */ return; }
+        if (uri == null) {
+            Log.e("MAIN_ACTIVITY", "Received null Uri");
+            Toast.makeText(this, "이미지를 가져오지 못했습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // '분석 시작' Toast는 ViewModel의 LiveData가
+        // "분석 중..." 텍스트로 대체하므로 여기서는 제거합니다.
 
         try {
             // 1. Uri -> Bitmap 변환
@@ -124,8 +141,6 @@ public class MainActivity extends AppCompatActivity {
 
             // 2. '작업 반장'에게 비트맵을 넘기며 "작업 시작!" 지시
             viewModel.startImageProcessing(bitmap);
-
-            Toast.makeText(this, "분석을 시작합니다...", Toast.LENGTH_SHORT).show();
 
         } catch (IOException e) {
             Log.e("MAIN_ACTIVITY", "Failed to load bitmap from Uri", e);

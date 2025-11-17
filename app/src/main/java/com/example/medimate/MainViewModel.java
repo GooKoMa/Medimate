@@ -12,6 +12,8 @@ import androidx.lifecycle.AndroidViewModel;
 import com.example.medimate.OCR.OcrProcessor;
 import com.example.medimate.GPT.GptProcessor;
 import com.example.medimate.TTS.TTSManager;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 public class MainViewModel extends AndroidViewModel {
 
@@ -23,11 +25,17 @@ public class MainViewModel extends AndroidViewModel {
     // --- 2. API 키 (ViewModel이 관리) ---
     private static final String OPENAI_API_KEY = "Bearer " + BuildConfig.OPENAI_API_KEY;
 
+    private MutableLiveData<String> processingResultLiveData = new MutableLiveData<>();
+    // (MainActivity가 '관찰'할 공개된 'Immutable' 버전)
+    public LiveData<String> getProcessingResultLiveData() {
+        return processingResultLiveData;
+    }
     // --- 3. 생성자 (전문가 고용) ---
     // (TTSManager는 Application Context가 필요해서 AndroidViewModel을 상속받음)
     public MainViewModel(@NonNull Application application) {
         super(application);
 
+        processingResultLiveData.setValue("이곳에 약봉투 분석 결과가 표시됩니다.");
         // '작업 반장'이 생성될 때 전문가들을 고용
         ocrProcessor = new OcrProcessor();
         gptProcessor = new GptProcessor();
@@ -40,6 +48,7 @@ public class MainViewModel extends AndroidViewModel {
      * MainActivity가 호출할 유일한 작업 시작 메소드
      */
     public void startImageProcessing(Bitmap bitmap) {
+        processingResultLiveData.postValue("이미지를 분석 중입니다. 잠시만 기다려주세요...");
         // 1단계: OCR 실행
         runOcr(bitmap);
     }
@@ -79,6 +88,7 @@ public class MainViewModel extends AndroidViewModel {
 
                 // (만약 Toast 메시지 등을 MainActivity에 보내고 싶다면
                 //  여기에 LiveData를 사용해서 값을 설정합니다.)
+                processingResultLiveData.postValue(processedText);
             }
 
             @Override
@@ -86,6 +96,7 @@ public class MainViewModel extends AndroidViewModel {
                 Log.e("MainViewModel", "GPT Error: " + errorMessage);
                 ttsManager.speak("내용을 요약하는 데 실패했습니다. 원본 텍스트를 읽어드립니다.");
                 ttsManager.speak(rawText); // 원본 읽기
+                processingResultLiveData.postValue("요약에 실패했습니다: " + errorMessage);
             }
         });
     }

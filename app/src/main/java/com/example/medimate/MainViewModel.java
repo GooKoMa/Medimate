@@ -3,109 +3,101 @@ package com.example.medimate;
 import android.app.Application;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
-
-// 전문가 클래스 import
-import com.example.medimate.OCR.OcrProcessor;
-import com.example.medimate.GPT.GptProcessor;
-import com.example.medimate.TTS.TTSManager;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.medimate.GPT.GptProcessor;
+import com.example.medimate.GPT.models.GptFullResponse; // (새 '틀' import)
+import com.example.medimate.OCR.OcrProcessor;
+import com.example.medimate.TTS.TTSManager;
+
 public class MainViewModel extends AndroidViewModel {
 
-    // --- 1. 전문가들 (이제 ViewModel이 직접 소유) ---
+    // --- 1. 전문가들 ---
     private OcrProcessor ocrProcessor;
     private GptProcessor gptProcessor;
     private TTSManager ttsManager;
-
-    // --- 2. API 키 (ViewModel이 관리) ---
     private static final String OPENAI_API_KEY = "Bearer " + BuildConfig.OPENAI_API_KEY;
 
-    private MutableLiveData<String> processingResultLiveData = new MutableLiveData<>();
-    // (MainActivity가 '관찰'할 공개된 'Immutable' 버전)
-    public LiveData<String> getProcessingResultLiveData() {
-        return processingResultLiveData;
+    // --- 2. LiveData (UI 상태) ---
+    // (수정) '대용량 JSON' 전체를 보관할 LiveData
+    private MutableLiveData<GptFullResponse> drugDataLiveData = new MutableLiveData<>();
+    // (새로 추가) 로딩 중인지 상태를 알릴 LiveData
+    private MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+
+    // --- 3. LiveData Getters (MainActivity가 '관찰'할) ---
+    public LiveData<GptFullResponse> getDrugDataLiveData() {
+        return drugDataLiveData;
     }
-    // --- 3. 생성자 (전문가 고용) ---
-    // (TTSManager는 Application Context가 필요해서 AndroidViewModel을 상속받음)
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
+    }
+
+    // --- 4. 생성자 ---
     public MainViewModel(@NonNull Application application) {
         super(application);
-
-        processingResultLiveData.setValue("이곳에 약봉투 분석 결과가 표시됩니다.");
-        // '작업 반장'이 생성될 때 전문가들을 고용
         ocrProcessor = new OcrProcessor();
         gptProcessor = new GptProcessor();
         ttsManager = new TTSManager(application.getApplicationContext());
     }
 
-    // --- 4. 작업 흐름 (MainActivity에서 옮겨온 로직) ---
-
-    /**
-     * MainActivity가 호출할 유일한 작업 시작 메소드
-     */
+    // --- 5. 작업 흐름 ---
     public void startImageProcessing(Bitmap bitmap) {
-        processingResultLiveData.postValue("이미지를 분석 중입니다. 잠시만 기다려주세요...");
-        // 1단계: OCR 실행
-        runOcr(bitmap);
-    }
+        isLoading.postValue(true); // 1. 로딩 시작
+        drugDataLiveData.postValue(null); // (선택) 이전 결과 지우기
 
-    /**
-     * 1단계: OCR 전문가에게 작업 지시
-     */
-    private void runOcr(Bitmap bitmap) {
         ocrProcessor.processBitmap(bitmap, new OcrProcessor.OcrCallback() {
             @Override
             public void onSuccess(String rawText) {
-                Log.d("MainViewModel", "OCR Success. Raw text: " + rawText);
+                Log.d("MainViewModel", "OCR Success.");
+                // 2. OCR 성공 -> GPT 전문가에게 텍스트 전달
+                gptProcessor.processText(rawText, OPENAI_API_KEY, new GptProcessor.GptCallback() {
 
-                // 2단계: GPT 실행
-                runGptPostProcessing(rawText);
+                    // 3. (콜백 수정) '대용량 JSON' 객체를 통째로 받음
+                    @Override
+                    public void onSuccess(GptFullResponse responseData) {
+                        Log.d("MainViewModel", "GPT Success. Drugs found: " + responseData.getDrugs().size());
+                        drugDataLiveData.postValue(responseData); // 4. LiveData에 데이터 저장
+                        isLoading.postValue(false); // 5. 로딩 끝
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Log.e("MainViewModel", "GPT Error: " + errorMessage);
+                        isLoading.postValue(false); // 5. 로딩 끝 (실패)
+                        // (에러 처리 LiveData를 만들 수도 있음)
+                        ttsManager.speak("분석에 실패했습니다. " + errorMessage);
+                    }
+                });
             }
 
             @Override
             public void onError(String errorMessage) {
                 Log.e("MainViewModel", "OCR Error: " + errorMessage);
-                ttsManager.speak("글자 인식에 실패했습니다. 다시 시도해 주세요.");
+                isLoading.postValue(false); // 5. 로딩 끝 (실패)
+                ttsManager.speak("글자 인식에 실패했습니다. " + errorMessage);
             }
         });
     }
 
+    // --- 6. (새 함수) 팝업 버튼 클릭 시 TTS 실행 ---
     /**
-     * 2단계: GPT 전문가에게 작업 지시
+     * MainActivity의 팝업 버튼이 이 함수를 호출합니다.
+     * @param textToSpeak (예: drug.getDosage())
      */
-    private void runGptPostProcessing(String rawText) {
-        gptProcessor.processText(rawText, OPENAI_API_KEY, new GptProcessor.GptCallback() {
-            @Override
-            public void onSuccess(String processedText) {
-                Log.d("MainViewModel", "GPT Success. Processed text: " + processedText);
-
-                // 3단계: TTS 실행
-                ttsManager.speak(processedText);
-
-                // (만약 Toast 메시지 등을 MainActivity에 보내고 싶다면
-                //  여기에 LiveData를 사용해서 값을 설정합니다.)
-                processingResultLiveData.postValue(processedText);
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                Log.e("MainViewModel", "GPT Error: " + errorMessage);
-                ttsManager.speak("내용을 요약하는 데 실패했습니다. 원본 텍스트를 읽어드립니다.");
-                ttsManager.speak(rawText); // 원본 읽기
-                processingResultLiveData.postValue("요약에 실패했습니다: " + errorMessage);
-            }
-        });
+    public void speakText(String textToSpeak) {
+        if (textToSpeak != null && !textToSpeak.isEmpty()) {
+            ttsManager.speak(textToSpeak);
+        } else {
+            ttsManager.speak("정보가 없습니다.");
+        }
     }
 
-    // --- 5. 앱 종료 시 자원 해제 ---
     @Override
     protected void onCleared() {
         super.onCleared();
-        // ViewModel이 파괴될 때 (예: 앱 종료) TTS 자원을 안전하게 해제
         if (ttsManager != null) {
             ttsManager.shutdown();
         }

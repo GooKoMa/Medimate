@@ -40,7 +40,6 @@ public class DetailAdapter extends RecyclerView.Adapter<DetailAdapter.ViewHolder
 
         holder.titleButton.setText(item.getTitle());
 
-        // ⭐ 버튼(텍스트 전체)을 누르면 speak 실행
         holder.titleButton.setOnClickListener(v -> listener.onSpeak(item.getContent()));
     }
 
